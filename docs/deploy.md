@@ -89,7 +89,14 @@ Presidio is built for Kubernetes, you can give it a try using [KIND (Kubernetes 
 
 ## Install presidio-analyzer as a Python package
 
-If you're interested in running the analyzer alone, you can install it as a standalone python package by packaging it into a `wheel` file. Note that Presidio requires Python >= 3.6.
+
+
+If you're interested in using the presidio-analyzer (In charge of identifying PII in text) as a standalone Python package, here are the options:
+1. Install using pip: `pip install presidio-analyzer`
+2. Install from source
+
+### Installing from source
+The Presidio-analyzer Python package can be installed as a standalone python package by packaging it into a `wheel` file. Note that Presidio requires Python >= 3.6.
 
 #### Creating the wheel file:
 
