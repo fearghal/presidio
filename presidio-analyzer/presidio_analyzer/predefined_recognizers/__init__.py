@@ -16,6 +16,7 @@ from .us_passport_recognizer import UsPassportRecognizer
 from .us_phone_recognizer import UsPhoneRecognizer
 from .us_ssn_recognizer import UsSsnRecognizer
 from .es_nif_recognizer import EsNifRecognizer
+from .ie_ppsn_recognizer import IePpsnRecognizer
 
 NLP_RECOGNIZERS = {"spacy": SpacyRecognizer, "stanza": StanzaRecognizer}
 
@@ -39,4 +40,5 @@ __all__ = [
     "UsSsnRecognizer",
     "NLP_RECOGNIZERS",
     "EsNifRecognizer",
+    "IePpsnRecognizer",
 ]
