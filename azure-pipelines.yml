@@ -9,13 +9,11 @@ variables:
   modulePath: "$(GOPATH)/src/github.com/$(build.repository.name)"
   GOROOT: "/usr/local/go1.11"
   azureContainerRegistry: fearghal.azurecr.io
-  azureSubscriptionEndpoint: fearghal
 steps:
   - task: Docker@1
     displayName: "ACR Login"
     inputs:
       containerregistrytype: "Azure Container Registry"
-      azureSubscriptionEndpoint: $(azureSubscriptionEndpoint)
       azureContainerRegistry: $(azureContainerRegistry)
       command: login
   - task: GoTool@0
