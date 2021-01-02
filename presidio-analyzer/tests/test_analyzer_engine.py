@@ -659,7 +659,7 @@ def test_demo_text(unit_test_guid, nlp_engine):
     assert len([entity for entity in detected_entities if entity == "US_PASSPORT"]) == 1
     assert len([entity for entity in detected_entities if entity == "US_SSN"]) == 1
 
-    assert len(results) == 19
+    assert len(results) == 20
 
 
 def test_get_recognizers_returns_predefined(nlp_engine):
@@ -668,8 +668,8 @@ def test_get_recognizers_returns_predefined(nlp_engine):
     )
     request = RecognizersAllRequest(language="en")
     response = analyze_engine.GetAllRecognizers(request, None)
-    # there are 15 predefined recognizers that detect the 17 entities
-    assert len(response) == 15
+    # there are 16 predefined recognizers that detect the 18 entities
+    assert len(response) == 16
 
 
 def test_get_recognizers_returns_custom():
@@ -687,7 +687,7 @@ def test_get_recognizers_returns_custom():
     request = RecognizersAllRequest(language="en")
     response = analyze_engine.GetAllRecognizers(request, None)
     # there are 15 predefined recognizers and one custom
-    assert len(response) == 16
+    assert len(response) == 17
     rocket_recognizer = [
         recognizer
         for recognizer in response
@@ -712,12 +712,12 @@ def test_get_recognizers_returns_added_custom():
     )
     request = RecognizersAllRequest(language="en")
     response = analyze_engine.GetAllRecognizers(request, None)
-    # there are 15 predefined recognizers
-    assert len(response) == 15
+    # there are 16 predefined recognizers
+    assert len(response) == 16
     recognizers_store_api_mock.add_custom_pattern_recognizer(pattern_recognizer)
     response = analyze_engine.GetAllRecognizers(request, None)
-    # there are 15 predefined recognizers and one custom
-    assert len(response) == 16
+    # there are 16 predefined recognizers and one custom
+    assert len(response) == 17
 
 
 def test_get_recognizers_returns_supported_language():
