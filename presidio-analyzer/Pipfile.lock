@@ -310,13 +310,6 @@
             "markers": "python_version >= '3.5'",
             "version": "==2.6.1"
         },
-        "pyre2": {
-            "file": "https://github.com/torosent/pyre2/archive/release/0.2.23.zip",
-            "hashes": [
-                "sha256:4ab2bb3dea6cfb2f4e4fb3d53a1717c2ee2392d55eb91ca572c9f7c474ba13df"
-            ],
-            "version": "==0.2.23"
-        },
         "pyyaml": {
             "hashes": [
                 "sha256:06a0d7ba600ce0b2d2fe2e78453a470b5a6e000a985dd4a4e54e436cc36b0e97",
