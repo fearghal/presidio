@@ -1,39 +1,39 @@
 # Presidio analyzer
 
 ## Description
-The presidio-analyzer is a Python based service which does the actual detection of PII entities.
 
-The main modules in presidio-analyzer are the AnalyzerEngine and the RecognizerRegistry. The AnalyzerEngine is in charge of calling each requested recognizer. the RecognizerRegistry is in charge of providing the list of predefined and custom recognizers for analysis.
+The Presidio analyzer is a Python based service for detecting PII entities in text.
 
-## Extending the analyzer for additional PII entities by introducing new code-based recognizers
+During analysis, it runs a set of different _PII Recognizers_,
+each one in charge of detecting one or more PII entities using different mechanisms.
 
-Code based recognizers are written in Python and are a part of the presidio-analyzer module.
-The main modules in `presidio-analyzer` are the `AnalyzerEngine` and the `RecognizerRegistry`.
-The `AnalyzerEngine` is in charge of calling each requested recognizer.
-The `RecognizerRegistry` is in charge of providing the list of predefined and custom recognizers for analysis.
+Presidio analyzer comes with a set of predefined recognizers,
+but can easily be extended with other types of custom recognizers.
+Predefined and custom recognizers leverage regex,
+Named Entity Recognition and other types of logic to detect PII in unstructured text.
 
-In order to implement a new recognizer by code, follow these two steps:
+## Deploy Presidio analyzer to Azure
 
-a. Implement the abstract recognizer class:
+Use the following button to deploy presidio analyzer to your Azure subscription.
 
-Create a new Python class which implements [LocalRecognizer](presidio_analyzer/local_recognizer.py).
-`LocalRecognizer` implements the base [EntityRecognizer](presidio_analyzer/entity_recognizer.py) class.
-All local recognizers run locally together with all other predefined recognizers as a part of the `presidio-analyzer` Python process. In contrast, `RemoteRecognizer` is an abstract class for recognizers that are external to the `presidio-analyzer` service, for example on a different microservice.
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2Fpresidio%2Fmain%2Fpresidio-analyzer%2Fdeploytoazure.json)
 
-The `EntityRecognizer` abstract class requires the implementation the following methods:
-
-i. initializing a model. Occurs when the `presidio-analyzer` process starts:
+## Simple usage example
 
 ```python
-def load(self)
+from presidio_analyzer import AnalyzerEngine
+
+# Set up the engine, loads the NLP module (spaCy model by default) and other PII recognizers
+analyzer = AnalyzerEngine()
+
+# Call analyzer to get results
+results = analyzer.analyze(text="My phone number is 212-555-5555",
+                           entities=["PHONE_NUMBER"],
+                           language='en')
+print(results)
+
 ```
 
-ii. analyze: The main function to be called for getting entities out of the new recognizer:
+## Documentation
 
-```python
-def analyze(self, text, entities, nlp_artifacts):
-```
-
-The `analyze` method should return a list of [RecognizerResult](presidio_analyzer/recognizer_result.py). Refer to the [code documentation](presidio_analyzer/entity_recognizer.py) for more information.
-
-b. Reference and add the new class to the `RecognizerRegistry` module, in the `load_predefined_recognizers` method, which registers all code based recognizers.
+Additional documentation on installation, usage and extending the Analyzer can be found under the [Analyzer](https://microsoft.github.io/presidio/analyzer/) section of [Presidio Documentation](https://microsoft.github.io/presidio)

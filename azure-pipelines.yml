@@ -1,39 +1,32 @@
-resources:
-  - repo: self
-queue:
-  name: Hosted Ubuntu 1604
-  timeoutInMinutes: 60
+# Presidio PR validation: security analysis, lint, build, unit test, e2e tests
+pr:
+  branches:
+    include:
+      - main
+
 variables:
-  GOBIN: "$(GOPATH)/bin"
-  GOPATH: "$(system.defaultWorkingDirectory)/gopath"
-  modulePath: "$(GOPATH)/src/github.com/$(build.repository.name)"
-  GOROOT: "/usr/local/go1.11"
-steps:
-  - task: Docker@1
-    displayName: "ACR Login"
-    inputs:
-      containerregistrytype: "Container Registry"
-      dockerRegistryEndpoint: presidio
-      command: login
-  - task: GoTool@0
-    inputs:
-      version: '1.13.5'
-    displayName: "Setup Go Env - Go Tool"
-  - bash: |
-      mkdir -p '$(GOBIN)'
-      mkdir -p '$(GOPATH)/pkg'
-      mkdir -p '$(modulePath)'
-      shopt -s extglob
-      mv !(gopath) '$(modulePath)'
-      echo '##vso[task.prependpath]$(GOBIN)'
-      echo '##vso[task.prependpath]$(GOROOT)/bin'
-    displayName: "Prepare directories"
-  - bash: |
-      curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-      dep ensure
-      make DOCKER_REGISTRY=$(DOCKER_REGISTRY) PRESIDIO_LABEL=$(Build.BuildID) test-functional
-    workingDirectory: "$(modulePath)"
-    displayName: "Build & Test "
-  - bash: "make DOCKER_REGISTRY=$(DOCKER_REGISTRY) PRESIDIO_LABEL=$(Build.BuildID) docker-push"
-    workingDirectory: "$(modulePath)"
-    displayName: "Push Docker Images"
+  - group: Presidio-V2-CI
+        
+stages:
+  - template: .pipelines/templates/lint-build-test.yml
+  - stage: E2ETests
+    dependsOn: [] # Run E2ETests in parallel to LintBuildTest
+    displayName: E2E Tests
+    jobs:
+    - job: E2ETests
+      displayName: E2e Tests
+      pool:
+        vmImage: 'ubuntu-16.04'
+      variables:
+        REGISTRY_NAME: '$(ACR_REGISTRY_NAME).azurecr.io/'
+        TAG: ':$(Build.BuildId)'
+      steps:
+        - task: DockerCompose@0
+          displayName: Build Presidio Images
+          inputs:
+              action: Build services
+              dockerComposeFile: docker-compose.yml
+              dockerComposeFileArgs: |
+                REGISTRY_NAME=$(REGISTRY_NAME)
+                TAG=$(TAG)
+        - template: .pipelines/templates/e2e-tests.yml

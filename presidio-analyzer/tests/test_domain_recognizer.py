@@ -17,15 +17,17 @@ def entities():
 @pytest.mark.parametrize(
     "text, expected_len, expected_positions",
     [
+        # fmt: off
         # valid domain names
         ("microsoft.com", 1, ((0, 13),),),
         ("my domains: microsoft.com google.co.il", 2, ((12, 25), (26, 38),),),
         # invalid domain names
         ("microsoft.", 0, ()),
         ("my domain is microsoft.", 0, ()),
+        # fmt: on
     ],
 )
-def test_all_domain_names(
+def test_when_all_domain_names_then_succeed(
     text, expected_len, expected_positions, recognizer, entities, max_score
 ):
     results = recognizer.analyze(text, entities)

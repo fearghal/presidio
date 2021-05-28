@@ -1,15 +1,18 @@
-import time
+import copy
 import logging
+from typing import Optional, List, Iterable, Union, Type
 
-from presidio_analyzer.recognizer_registry import RecognizerStoreApi
+from presidio_analyzer import EntityRecognizer
+from presidio_analyzer.nlp_engine import NlpEngine, SpacyNlpEngine, StanzaNlpEngine
 from presidio_analyzer.predefined_recognizers import (
-    NLP_RECOGNIZERS,
     CreditCardRecognizer,
     CryptoRecognizer,
+    DateRecognizer,
     DomainRecognizer,
     EmailRecognizer,
     IbanRecognizer,
     IpRecognizer,
+    MedicalLicenseRecognizer,
     NhsRecognizer,
     UsBankRecognizer,
     UsLicenseRecognizer,
@@ -20,51 +23,41 @@ from presidio_analyzer.predefined_recognizers import (
     SgFinRecognizer,
     SpacyRecognizer,
     EsNifRecognizer,
+    StanzaRecognizer,
 )
+
+logger = logging.getLogger("presidio-analyzer")
 
 
 class RecognizerRegistry:
     """
-    Detects, registers and holds all recognizers to be used by the analyzer
+    Detect, register and hold all recognizers to be used by the analyzer.
+
+    :param recognizers: An optional list of recognizers,
+    that will be available instead of the predefined recognizers
     """
 
-    def __init__(self, recognizer_store_api=RecognizerStoreApi(), recognizers=None):
-        """
-        :param recognizer_store_api: An instance of a class that has custom
-               recognizers management functionallity (insert, update, get,
-               delete). The default store if nothing is else is provided is
-               a store that uses a persistent storage
-        :param recognizers: An optional list of recognizers that will be
-               available in addition to the predefined recognizers and the
-               custom recognizers
-        """
+    def __init__(self, recognizers: Optional[Iterable[EntityRecognizer]] = None):
+
         if recognizers:
             self.recognizers = recognizers
         else:
             self.recognizers = []
 
-        # loaded_hash is the hash value of the recognizers in the recognizer
-        # store. It is used to avoid fetching recognizers when there hasn't
-        # been a change to the recognizers state.
-        self.loaded_hash = None
-        # the loaded_timestamp is used for debugging purposes, so it will be
-        # easy to understand when did the last fetching occured
-        self.loaded_timestamp = None
-        self.loaded_custom_recognizers = []
-        self.store_api = recognizer_store_api
+    def load_predefined_recognizers(
+        self, languages: Optional[List[str]] = None, nlp_engine: NlpEngine = None
+    ) -> None:
+        """
+        Load the existing recognizers into memory.
 
-    def load_predefined_recognizers(self, languages=None, nlp_engine="spacy"):
-        #   TODO: Change the code to dynamic loading -
-        # Task #598:  Support loading of the pre-defined recognizers
-        # from the given path.
-        # Currently this is not integrated into the init method to speed up
-        # loading time if these are not actually needed (SpaCy for example) is
-        # time consuming to load
-
+        :param languages: List of languages for which to load recognizers
+        :param nlp_engine: The NLP engine to use.
+        :return: None
+        """
         if not languages:
             languages = ["en"]
 
-        NlpRecognizer = NLP_RECOGNIZERS.get(nlp_engine, SpacyRecognizer)
+        nlp_recognizer = self._get_nlp_recognizer(nlp_engine)
         recognizers_map = {
             "en": [
                 UsBankRecognizer,
@@ -76,17 +69,17 @@ class RecognizerRegistry:
                 NhsRecognizer,
                 SgFinRecognizer,
             ],
-            "es": [
-                EsNifRecognizer,
-            ],
+            "es": [EsNifRecognizer],
             "ALL": [
                 CreditCardRecognizer,
                 CryptoRecognizer,
+                DateRecognizer,
                 DomainRecognizer,
                 EmailRecognizer,
                 IbanRecognizer,
                 IpRecognizer,
-                NlpRecognizer,
+                MedicalLicenseRecognizer,
+                nlp_recognizer,
             ],
         }
         for lang in languages:
@@ -97,13 +90,38 @@ class RecognizerRegistry:
             ]
             self.recognizers.extend(all_recognizers)
 
-    def get_recognizers(self, language, entities=None, all_fields=False):
+    @staticmethod
+    def _get_nlp_recognizer(
+        nlp_engine: NlpEngine,
+    ) -> Union[Type[SpacyRecognizer], Type[StanzaRecognizer]]:
+        """Return the recognizer leveraging the selected NLP Engine."""
+
+        if not nlp_engine or type(nlp_engine) == SpacyNlpEngine:
+            return SpacyRecognizer
+        if isinstance(nlp_engine, StanzaNlpEngine):
+            return StanzaRecognizer
+        else:
+            logger.warning(
+                "nlp engine should be either SpacyNlpEngine or StanzaNlpEngine"
+            )
+            # Returning default
+            return SpacyRecognizer
+
+    def get_recognizers(
+        self,
+        language: str,
+        entities: Optional[List[str]] = None,
+        all_fields: bool = False,
+        ad_hoc_recognizers: Optional[List[EntityRecognizer]] = None,
+    ) -> List[EntityRecognizer]:
         """
-        Returns a list of the recognizer, which supports the specified name and
-        language.
+        Return a list of recognizers which supports the specified name and language.
+
         :param entities: the requested entities
         :param language: the requested language
         :param all_fields: a flag to return all fields of a requested language.
+        :param ad_hoc_recognizers: Additional recognizers provided by the user
+        as part of the request
         :return: A list of the recognizers which supports the supplied entities
         and language
         """
@@ -113,16 +131,12 @@ class RecognizerRegistry:
         if entities is None and all_fields is False:
             raise ValueError("No entities provided")
 
-        if self.store_api:
-            all_possible_recognizers = self.recognizers.copy()
-            custom_recognizers = self.get_custom_recognizers()
-            all_possible_recognizers.extend(custom_recognizers)
-            logging.info("Found %d (total) custom recognizers", len(custom_recognizers))
-        else:
-            all_possible_recognizers = self.recognizers
+        all_possible_recognizers = copy.copy(self.recognizers)
+        if ad_hoc_recognizers:
+            all_possible_recognizers.extend(ad_hoc_recognizers)
 
         # filter out unwanted recognizers
-        to_return = []
+        to_return = set()
         if all_fields:
             to_return = [
                 rec
@@ -139,63 +153,48 @@ class RecognizerRegistry:
                 ]
 
                 if not subset:
-                    logging.warning(
+                    logger.warning(
                         "Entity %s doesn't have the corresponding"
                         " recognizer in language : %s",
                         entity,
                         language,
                     )
                 else:
-                    to_return.extend(subset)
+                    to_return.update(set(subset))
 
-        logging.info(
-            "Returning a total of %d recognizers (predefined + custom)", len(to_return)
+        logger.debug(
+            "Returning a total of %s recognizers",
+            str(len(to_return)),
         )
 
         if not to_return:
             raise ValueError("No matching recognizers were found to serve the request.")
 
-        return to_return
+        return list(to_return)
 
-    def get_custom_recognizers(self):
+    def add_recognizer(self, recognizer: EntityRecognizer) -> None:
         """
-        Returns a list of custom recognizers retrieved from the store object
+        Add a new recognizer to the list of recognizers.
+
+        :param recognizer: Recognizer to add
         """
-        if not self.store_api:
-            return []
+        if not isinstance(recognizer, EntityRecognizer):
+            raise ValueError("Input is not of type EntityRecognizer")
 
-        if self.loaded_hash is not None:
-            logging.info(
-                "Analyzer loaded custom recognizers on: %s [hash %s]",
-                time.strftime(
-                    "%Y-%m-%d %H:%M:%S", time.localtime(int(self.loaded_timestamp))
-                ),
-                self.loaded_hash,
-            )
-        else:
-            logging.info("Analyzer loaded custom recognizers on: Never")
+        self.recognizers.append(recognizer)
 
-        latest_hash = self.store_api.get_latest_hash()
-        # is update time is not set, no custom recognizers in storage, skip
-        if latest_hash:
-            logging.info("Persistent storage has hash: %s", latest_hash)
-            # check if anything updated since last time
-            if self.loaded_hash is None or latest_hash != self.loaded_hash:
-                self.loaded_timestamp = int(time.time())
-                self.loaded_hash = latest_hash
+    def remove_recognizer(self, recognizer_name: str) -> None:
+        """
+        Remove a recognizer based on its name.
 
-                self.loaded_custom_recognizers = []
-                # read all values
-                logging.info("Requesting custom recognizers from the storage...")
-
-                raw_recognizers = self.store_api.get_all_recognizers()
-                if raw_recognizers is None or not raw_recognizers:
-                    logging.info("No custom recognizers found")
-                    return []
-
-                logging.info(
-                    "Found %d recognizers in the storage", len(raw_recognizers)
-                )
-                self.loaded_custom_recognizers = raw_recognizers
-
-        return self.loaded_custom_recognizers
+        :param recognizer_name: Name of recognizer to remove
+        """
+        new_recognizers = [
+            rec for rec in self.recognizers if rec.name != recognizer_name
+        ]
+        logger.info(
+            "Removed %s recognizers which had the name %s",
+            str(len(self.recognizers) - len(new_recognizers)),
+            recognizer_name,
+        )
+        self.recognizers = new_recognizers

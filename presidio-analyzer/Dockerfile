@@ -1,25 +1,18 @@
-# Presidio Analyzer Dockerfile. 
-# This dockerfile installs presidio analyzer wheel from a pypi endpoint.
-ARG REGISTRY=presidio.azurecr.io
-ARG PRESIDIO_DEPS_LABEL=latest
-FROM ${REGISTRY}/presidio-python-deps:${PRESIDIO_DEPS_LABEL}
+FROM python:3.9-slim
 
-ARG NAME=presidio-analyzer
-ARG PIP_EXTRA_INDEX_URL
-ARG VERSION
-
+ARG NAME
+ARG NLP_CONF_FILE=conf/default.yaml
+ENV PIPENV_VENV_IN_PROJECT=1
 WORKDIR /usr/bin/${NAME}
-ENV PIP_EXTRA_INDEX_URL=${PIP_EXTRA_INDEX_URL}
 
-RUN . $(pipenv --venv)/bin/activate && pip install presidio-analyzer==${VERSION:-0.0.1}    
+COPY ./Pipfile* /usr/bin/${NAME}/
+RUN pip install pipenv
+RUN pipenv sync
+# install nlp models specified in conf/default.yaml
+COPY ./install_nlp_models.py /usr/bin/${NAME}/
+COPY ${NLP_CONF_FILE} /usr/bin/${NAME}/${NLP_CONF_FILE}
+RUN pipenv run python install_nlp_models.py --conf_file ${NLP_CONF_FILE}
 
-#----------------------------
-
-FROM ${REGISTRY}/presidio-python-deps:${PRESIDIO_DEPS_LABEL}
-
-ARG NAME=presidio-analyzer
-ADD ./${NAME}/presidio_analyzer /usr/bin/${NAME}/presidio_analyzer
-ADD ./${NAME}/conf /usr/bin/${NAME}/presidio_analyzer/conf
-WORKDIR /usr/bin/${NAME}/presidio_analyzer
-
-CMD pipenv run python app.py serve --env-grpc-port
+COPY . /usr/bin/${NAME}/
+EXPOSE ${PORT}
+CMD pipenv run python app.py --host 0.0.0.0

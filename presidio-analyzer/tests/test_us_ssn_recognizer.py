@@ -17,14 +17,16 @@ def entities():
 @pytest.mark.parametrize(
     "text, expected_len, expected_positions, expected_score_ranges",
     [
-        # very weak match TODO figure out why this fails
-        # ("078-05112 07805-112", 2, ((0, 10), (11, 21),), ((0.0, 0.3), (0.0, 0.3),),),
+        # fmt: off
+        # very weak match
+        ("078-051121 07805-1121", 2, ((0, 10), (11, 21),), ((0.0, 0.3), (0.0, 0.3),),),
         # weak match
-        ("078051121", 1, ((0, 9),), ((0.3, 0.4),),),
+        ("078051121", 1, ((0, 9),), ((0.0, 0.4),),),
         # medium match
         ("078-05-1123", 1, ((0, 11),), ((0.5, 0.6),),),
         ("078.05.1123", 1, ((0, 11),), ((0.5, 0.6),),),
         ("078 05 1123", 1, ((0, 11),), ((0.5, 0.6),),),
+        ("abc 078 05 1123 abc", 1, ((4, 15),), ((0.5, 0.6),),),
         # no match
         ("0780511201", 0, (), (),),
         ("078051120", 0, (), (),),
@@ -33,9 +35,10 @@ def entities():
         ("078-05-0000", 0, (), (),),
         ("078 00 1123", 0, (), (),),
         ("693-09.4444", 0, (), (),),
+        # fmt: on
     ],
 )
-def test_all_us_ssns(
+def test_when_snn_in_text_than_all_us_ssns_are_found(
     text,
     expected_len,
     expected_positions,
@@ -45,6 +48,7 @@ def test_all_us_ssns(
     max_score,
 ):
     results = recognizer.analyze(text, entities)
+    results = sorted(results, key=lambda x: x.start)
     assert len(results) == expected_len
     for res, (st_pos, fn_pos), (st_score, fn_score) in zip(
         results, expected_positions, expected_score_ranges

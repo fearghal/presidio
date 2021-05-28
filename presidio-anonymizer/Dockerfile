@@ -1,19 +1,14 @@
-ARG REGISTRY=presidio.azurecr.io
+FROM python:3.9-slim
 
-FROM ${REGISTRY}/presidio-golang-base AS build-env
+ARG NAME
+ENV PIPENV_VENV_IN_PROJECT=1
+WORKDIR /usr/bin/${NAME}
 
-ARG NAME=presidio-anonymizer
-ARG PRESIDIOPATH=${GOPATH}/src/github.com/Microsoft/presidio
-ARG VERSION=latest
+COPY ./Pipfile* /usr/bin/${NAME}/
+RUN pip install pipenv
+RUN pipenv sync
 
-WORKDIR ${PRESIDIOPATH}/${NAME}/cmd/${NAME}
-RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 && go build -ldflags '-X github.com/Microsoft/presidio/pkg/version.Version=${VERSION}' -o /usr/bin/${NAME}
+COPY . /usr/bin/${NAME}/
 
-#----------------------------
-
-FROM alpine:3.8
-
-ARG NAME=presidio-anonymizer
-WORKDIR  /usr/bin/
-COPY --from=build-env /usr/bin/${NAME} /usr/bin/
-CMD  /usr/bin/presidio-anonymizer
+EXPOSE ${PORT}
+CMD pipenv run python app.py

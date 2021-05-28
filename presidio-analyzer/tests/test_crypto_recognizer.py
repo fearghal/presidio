@@ -18,13 +18,15 @@ def entities():
 @pytest.mark.parametrize(
     "text, expected_len, expected_positions",
     [
+        # fmt: off
         ("16Yeky6GMjeNkAiNcBY7ZhrLoMSgg1BoyZ", 1, ((0, 34),),),
         ("my wallet address is: 16Yeky6GMjeNkAiNcBY7ZhrLoMSgg1BoyZ", 1, ((22, 56),),),
         ("16Yeky6GMjeNkAiNcBY7ZhrLoMSgg1BoyZ2", 0, ()),
         ("my wallet address is: 16Yeky6GMjeNkAiNcBY7ZhrLoMSgg1BoyZ2", 0, ()),
+        # fmt: on
     ],
 )
-def test_all_cryptos(
+def test_when_all_cryptos_then_succeed(
     text, expected_len, expected_positions, recognizer, entities, max_score
 ):
     results = recognizer.analyze(text, entities)

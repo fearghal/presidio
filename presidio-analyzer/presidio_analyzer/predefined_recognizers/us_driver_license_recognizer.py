@@ -1,3 +1,5 @@
+from typing import Optional, List
+
 from presidio_analyzer import Pattern, PatternRecognizer
 
 # List from https://ntsi.com/drivers-license-format/
@@ -12,17 +14,21 @@ from presidio_analyzer import Pattern, PatternRecognizer
 # one to indicate at least one digit or one '*'
 
 
-# pylint: disable=line-too-long,abstract-method
 class UsLicenseRecognizer(PatternRecognizer):
     """
-    Recognizes US driver license using regex
+    Recognizes US driver license using regex.
+
+    :param patterns: List of patterns to be used by this recognizer
+    :param context: List of context words to increase confidence in detection
+    :param supported_language: Language this recognizer supports
+    :param supported_entity: The entity this recognizer can detect
     """
 
     PATTERNS = [
         Pattern(
             "Driver License - WA (weak)",
             r"\b((?=.*\d)([A-Z][A-Z0-9*]{11})|(?=.*\*)([A-Z][A-Z0-9*]{11}))\b",  # noqa: E501
-            0.4,
+            0.3,
         ),
         Pattern(
             "Driver License - Alphanumeric (weak)",
@@ -42,20 +48,18 @@ class UsLicenseRecognizer(PatternRecognizer):
         "permit",
         "lic",
         "identification",
-        "dl",
         "dls",
         "cdls",
-        "id",
         "lic#",
         "driving",
     ]
 
     def __init__(
         self,
-        patterns=None,
-        context=None,
-        supported_language="en",
-        supported_entity="US_DRIVER_LICENSE",
+        patterns: Optional[List[Pattern]] = None,
+        context: Optional[List[str]] = None,
+        supported_language: str = "en",
+        supported_entity: str = "US_DRIVER_LICENSE",
     ):
         patterns = patterns if patterns else self.PATTERNS
         context = context if context else self.CONTEXT

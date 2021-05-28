@@ -9,11 +9,6 @@ def entities():
 
 
 @pytest.fixture(scope="module")
-def nlp_engine(nlp_engines):
-    return nlp_engines["spacy_en"]
-
-
-@pytest.fixture(scope="module")
 def nlp_recognizer(nlp_recognizers):
     return nlp_recognizers["spacy"]
 
@@ -27,15 +22,16 @@ def prepare_and_analyze(nlp, recognizer, text, ents):
 @pytest.mark.parametrize(
     "text, expected_len, expected_positions, entity_num",
     [
+        # fmt: off
         # Test PERSON entity
         ("my name is Dan", 1, ((11, 14),), 0),
         ("Dan Tailor", 1, ((0, 10),), 0),
         ("John Oliver is a comedian.", 1, ((0, 11),), 0),
         ("Richard Milhous Nixon", 1, ((0, 21),), 0),
         ("Richard M. Nixon", 1, ((0, 16),), 0),
-        ("Dan May has a bank account.", 1, ((0, 7),), 0),
-        ("Mr. May", 1, ((4, 7),), 0),
-        ("They call me Mr. May", 1, ((17, 20),), 0),
+        ("Dan Bar has a bank account.", 1, ((0, 7),), 0),
+        ("Mr. Mayers", 1, ((4, 10),), 0),
+        ("They call me Mr. Mayers", 1, ((17, 23),), 0),
         # Test DATE_TIME Entity
         ("1972", 1, ((0, 4),), 1),
         ("I bought my car in 1972", 1, ((19, 23),), 1),
@@ -43,9 +39,10 @@ def prepare_and_analyze(nlp, recognizer, text, ents):
         ("May 1st", 1, ((0, 7),), 1),
         ("May 1st, 1977", 1, ((0, 13),), 1),
         ("I bought my car on May 1st, 1977", 1, ((19, 32),), 1),
+        # fmt: on
     ],
 )
-def test_all_spacy(
+def test_when_using_spacy_then_all_spacy_result_found(
     text,
     expected_len,
     expected_positions,
@@ -65,7 +62,9 @@ def test_all_spacy(
         )
 
 
-def test_person_full_name_complex(nlp_engine, nlp_recognizer, entities):
+def test_when_person_in_text_then_person_full_name_complex_found(
+    nlp_engine, nlp_recognizer, entities
+):
     text = "Richard (Rick) C. Henderson"
     results = prepare_and_analyze(nlp_engine, nlp_recognizer, text, entities)
 

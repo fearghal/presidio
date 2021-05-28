@@ -4,16 +4,15 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-cython = "*"
-spacy = "==2.2.3"
+spacy = "==3.0.5"
 regex = "*"
-pyre2 = {file = "https://github.com/torosent/pyre2/archive/release/0.2.23.zip"}
-grpcio = "*"
-protobuf = "*"
 tldextract = "*"
-knack = "*"
+numpy = "==1.19.3"
+flask = "==1.1.2"
+pyyaml = "*"
 
 [dev-packages]
 pytest = "*"
 flake8= {version = "==3.7.9"}
-pylint = {version = "==2.3.1"}
+pep8-naming = "*"
+flake8-docstrings = "*"

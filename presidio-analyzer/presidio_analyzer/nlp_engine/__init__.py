@@ -1,13 +1,15 @@
-# pylint: disable=unused-import
-from .nlp_artifacts import NlpArtifacts  # noqa: F401
-from .nlp_engine import NlpEngine  # noqa: F401
-from .spacy_nlp_engine import SpacyNlpEngine  # noqa: F401
-from .stanza_nlp_engine import StanzaNlpEngine  # noqa: F401
+"""NLP engine package. Performs text pre-processing."""
 
-_all_engines = [SpacyNlpEngine, StanzaNlpEngine]
+from .nlp_artifacts import NlpArtifacts
+from .nlp_engine import NlpEngine
+from .spacy_nlp_engine import SpacyNlpEngine
+from .stanza_nlp_engine import StanzaNlpEngine
+from .nlp_engine_provider import NlpEngineProvider
 
-NLP_ENGINES = {
-    engine.engine_name: engine
-    for engine in _all_engines
-    if engine.is_available
-}
+__all__ = [
+    "NlpArtifacts",
+    "NlpEngine",
+    "SpacyNlpEngine",
+    "StanzaNlpEngine",
+    "NlpEngineProvider",
+]

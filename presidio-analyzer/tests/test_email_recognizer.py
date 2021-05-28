@@ -17,19 +17,19 @@ def entities():
 @pytest.mark.parametrize(
     "text, expected_len, expected_positions",
     [
+        # fmt: off
         # valid email addresses
         ("info@presidio.site", 1, ((0, 18),),),
         ("my email address is info@presidio.site", 1, ((20, 38),),),
-        (
-            "try one of these emails: info@presidio.site or anotherinfo@presidio.site",
+        ("try one of these emails: info@presidio.site or anotherinfo@presidio.site",
             2,
-            ((25, 43), (47, 72),),
-        ),
+         ((25, 43), (47, 72),),),
         # invalid email address
         ("my email is info@presidio.", 0, ()),
+        # fmt: on
     ],
 )
-def test_all_email_addresses(
+def test_when_all_email_addresses_then_succeed(
     text, expected_len, expected_positions, recognizer, entities, max_score
 ):
     results = recognizer.analyze(text, entities)
