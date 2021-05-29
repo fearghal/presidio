@@ -9,7 +9,7 @@ My passport: <US_PASSPORT> and my phone number: <PHONE_NUMBER>.
 
 This is a valid International Bank Account Number: <IBAN_CODE> . Can you please check the status on bank account <US_BANK_NUMBER>?
 
-<PERSON>'s social security number is <US_SSN>.  Her driver license? it is <US_DRIVER_LICENSE>.
+<PERSON>'s social security number is <US_SSN>.  Her driver license? it is <IE_PPS_NUMBER>.
 
 
 This project welcomes contributions and suggestions. Most contributions require you to agree to a Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us the rights to use your contribution. For details, visit https://<DOMAIN_NAME>
