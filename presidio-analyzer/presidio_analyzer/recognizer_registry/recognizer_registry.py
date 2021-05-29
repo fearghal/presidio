@@ -5,7 +5,6 @@ from typing import Optional, List, Iterable, Union, Type
 from presidio_analyzer import EntityRecognizer
 from presidio_analyzer.nlp_engine import NlpEngine, SpacyNlpEngine, StanzaNlpEngine
 from presidio_analyzer.predefined_recognizers import (
-    NLP_RECOGNIZERS,
     CreditCardRecognizer,
     CryptoRecognizer,
     DateRecognizer,
